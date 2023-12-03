@@ -1,4 +1,9 @@
 #include "test_runner.h"
+#include "suffix_tree.h"
+#include "indexer.h"
+#include "helper.h"
+
+#include <numeric>
 
 template <typename SufTree>
 void SimpleTest() {
@@ -82,9 +87,14 @@ void StressTestTree() { StressTest<SuffixTree<string, map<char, int>>>(); }
 
 void StressTestArray() { StressTest<ArrSufTreeWithEngAlph>(); }
 
+void StressTestVector() { StressTest<VecSufTreeWithEngAlph>(); }
+
 void IndexerTest() {
   ArrSufTreeWithDNA sf(randomDNA(1000));
-  SuffixTree<string> sf1(randomDNA(1000));
+  VecSufTreeWithEngAlph sf1(randomStringEng(1000));
+  SuffixTree<string> sf2(randomDNA(1000));
+  ArrSufTreeWithIntSeq<100> sf3(randomIntVec<100>(1000));
+  VecSufTreeWithIntSeq<100> sf4(randomIntVec<100>(1000));
 }
 
 void RunTests() {
@@ -96,5 +106,6 @@ void RunTests() {
   RUN_TEST(tr, StressTestHash);
   RUN_TEST(tr, StressTestTree);
   RUN_TEST(tr, StressTestArray);
+  RUN_TEST(tr, StressTestVector);
   RUN_TEST(tr, IndexerTest);
 }

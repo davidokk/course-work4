@@ -2,24 +2,21 @@
 
 template <typename T>
 struct DefaultIndexer {
-  T operator()(const T& t) { return t; };
+  T operator()(const T& c) const { return c; }
 };
 
-struct EnglishAlphabetIndexer {
-  int operator()(char c) const { return c - 'a'; }
+template <int AlphSize> 
+struct IntSequenceIndxer {
+  int operator()(int c) const { return c; }
+  constexpr static int size = AlphSize;
+};
+
+struct EngAlphIndexer {
+  int operator()(char c) const;
+  constexpr static int size = 26;
 };
 
 struct DNAIndexer {
-  int operator()(char c) const {
-    switch (c) {
-      case 'A':
-        return 0;
-      case 'C':
-        return 1;
-      case 'T':
-        return 2;
-      default:
-        return 3;
-    }
-  }
+  int operator()(char c) const;
+  constexpr static int size = 4;
 };

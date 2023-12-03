@@ -17,5 +17,6 @@ void StressTest();
 void StressTestHash();
 void StressTestTree();
 void StressTestArray(); 
+void StressTestVector();
 
 void IndexerTest();
