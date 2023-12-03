@@ -21,7 +21,8 @@ vector<int> randomIntVec(int n) {
 }
 
 template<typename T> 
-void printContainer(ostream& out, const T& v) {
+string vecToString(const vector<T>& v) {
+  ostringstream out;
   out << "[";
   bool first = true;
   for (const auto& i : v) {
@@ -32,4 +33,5 @@ void printContainer(ostream& out, const T& v) {
     first = false;
   }
   out << "]";
+  return out.str();
 }
