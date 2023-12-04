@@ -98,6 +98,7 @@ void IndexerTest() {
 }
 
 void RunTests() {
+  cerr << "Run tests..." << endl;
   TestRunner tr;
   RUN_TEST(tr, SimpleTestHash);
   RUN_TEST(tr, SimpleTestArray);

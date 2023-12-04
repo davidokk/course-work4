@@ -27,22 +27,28 @@ class Stats {
 
   vector<int> Childs() const { return childs; }
 
-  vector<pair<int, double>> DepthsAvg() const {
+  pair<vector<int>, vector<double>> DepthsAvg() const {
     return DepthAggregation<double>(avg<int>);
   }
 
-  vector<pair<int, int>> DepthsMedian() const {
+  pair<vector<int>, vector<int>> DepthsMedian() const {
     return DepthAggregation<int>(median<int>);
+  }
+
+  pair<vector<int>, vector<int>> DepthsCount() const {
+    return DepthAggregation<int>([](const vector<int>& v) { return v.size(); });
   }
 
  private:
   template <typename ResType, typename AggFunc>
-  vector<pair<int, ResType>> DepthAggregation(AggFunc agg) const {
-    vector<pair<int, ResType>> res; 
+  pair<vector<int>, vector<ResType>> DepthAggregation(AggFunc agg) const {
+    vector<int> d;
+    vector<ResType> res;
     for (const auto& [depth, values] : depthMap) {
-      res.emplace_back(depth, agg(values));
+      d.push_back(depth);
+      res.push_back(agg(values));
     }
-    return res; 
+    return {d, res};
   }
 
   vector<int> childs;
