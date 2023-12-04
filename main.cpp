@@ -3,5 +3,5 @@
 
 int main() {
   RunTests();
-  RunGraphics();
+  // RunGraphics();
 }
