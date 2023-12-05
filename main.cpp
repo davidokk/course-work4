@@ -1,7 +1,8 @@
-#include "tests.h"
 #include "benchmarks.h"
+#include "tests.h"
 
 int main() {
-  RunTests();
+  // RunTests();
   // RunGraphics();
+  // MemoryUsage();
 }
