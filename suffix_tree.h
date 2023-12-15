@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <forward_list>
 #include <ranges>
 #include <unordered_map>
 #include <vector>
@@ -12,12 +13,15 @@
 using namespace std;
 
 template <typename T>
-concept RandomAccessContainer =
+concept String =
     std::ranges::random_access_range<T> &&
-    std::equality_comparable<typename T::value_type>;
+    std::equality_comparable<typename T::value_type> && requires(T t) {
+      { std::begin(t) } -> std::same_as<decltype(std::begin(t))>;
+      { std::end(t) } -> std::same_as<decltype(std::end(t))>;
+    };
 
 // NodeType is one of map, unordered_map, vector, array
-template <RandomAccessContainer T = string,
+template <String T = string,
           typename NodeType = unordered_map<typename T::value_type, int>,
           typename Indexer = DefaultIndexer<typename T::value_type>>
 class SuffixTree {
@@ -45,7 +49,7 @@ class SuffixTree {
   Stats GetStats() {
     Stats st;
     if constexpr (std::is_same_v<NodeType, unordered_map<ElType, int>>) {
-      Dfs(0, 0, st);
+      StatsDfs(0, 0, st);
     }
     return st;
   }
@@ -53,11 +57,11 @@ class SuffixTree {
  private:
   using ElType = typename T::value_type;
 
-  void Dfs(int idx, int depth, Stats& st) {
+  void StatsDfs(int idx, int depth, Stats& st) {
     auto node = t[idx];
     st.Add(depth, static_cast<int>(node.next.size()));
     for (const auto& [ch, to] : node.next) {
-      Dfs(to, depth + 1, st);
+      StatsDfs(to, depth + 1, st);
     }
   }
 
@@ -78,18 +82,37 @@ class SuffixTree {
     Indexer indexer;
 
     Node(int l = 0, int r = 0, int par = -1) : l(l), r(r), par(par), link(-1) {
-      // if NodeType is array
-      for (int i = 0; i < next.size(); i++) next[i] = 0;
-      // if vector
-      if constexpr (std::is_same_v<NodeType, vector<int>>) {
+      if constexpr (std::is_same_v<NodeType, array<int, Indexer::size>>) {
+        for (int i = 0; i < next.size(); i++) next[i] = 0;
+      } else if constexpr (std::is_same_v<NodeType, vector<int>>) {
         next.resize(Indexer::size);
       }
     }
+
     int len() { return r - l; }
+
     int& get(ElType c) {
-      auto idx = indexer(c);
-      if (next[idx] == 0) next[idx] = -1;
-      return next[idx];
+      if constexpr (std::is_same_v<NodeType, forward_list<pair<ElType, int>>>) {
+        if (next.empty() || c < next.begin()->first) {
+          next.emplace_front(c, -1);
+          return next.begin()->second;
+        }
+        auto prev = next.begin();
+        auto it = std::next(next.begin());
+        while (it != next.end()) {
+          if (it->first > c) break;
+          prev = it;
+          ++it;
+        }
+        if (prev->first != c) {
+          prev = next.emplace_after(prev, c, -1);
+        }
+        return prev->second;
+      } else {
+        auto idx = indexer(c);
+        if (next[idx] == 0) next[idx] = -1;
+        return next[idx];
+      }
     }
   };
 
@@ -170,8 +193,6 @@ class SuffixTree {
 using ArrSufTreeWithEngAlph =
     SuffixTree<string, array<int, EngAlphIndexer::size>, EngAlphIndexer>;
 
-using VecSufTreeWithEngAlph = SuffixTree<string, vector<int>, EngAlphIndexer>;
-
 using ArrSufTreeWithDNA =
     SuffixTree<string, array<int, DNAIndexer::size>, DNAIndexer>;
 
@@ -183,3 +204,13 @@ using ArrSufTreeWithIntSeq =
 template <int AlphSize>
 using VecSufTreeWithIntSeq =
     SuffixTree<vector<int>, vector<int>, IntSequenceIndxer<AlphSize>>;
+
+using VecSufTreeWithEngAlph = SuffixTree<string, vector<int>, EngAlphIndexer>;
+
+using ListSufTreeWithEngAlph =
+    SuffixTree<string, forward_list<pair<char, int>>>;
+using ListSufTreeWithIntSeq =
+    SuffixTree<vector<int>, forward_list<pair<int, int>>>;
+
+using MapSufTreeWithEngAlph = SuffixTree<string, map<char, int>>;
+using MapSufTreeWithIntSeq = SuffixTree<vector<int>, map<int, int>>;

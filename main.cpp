@@ -2,7 +2,7 @@
 #include "tests.h"
 
 int main() {
-  // RunTests();
-  // RunGraphics();
-  // MemoryUsage();
+  RunTests();
+  RunGraphics();
+  MemoryUsage();
 }

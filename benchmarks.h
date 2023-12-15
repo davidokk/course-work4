@@ -15,7 +15,7 @@
 using namespace std;
 
 template <typename Tree, typename StrGen>
-int BuildTreeBenchmark(int size, StrGen gen, int attempts = 10) {
+int BuildTreeBenchmark(int size, StrGen gen, int attempts = 5) {
   int sum = 0;
   for (int i = 0; i < attempts; i++) {
     int time = 0;
@@ -29,11 +29,11 @@ int BuildTreeBenchmark(int size, StrGen gen, int attempts = 10) {
 }
 
 template <typename Tree, typename StrGen>
-void GraphicTimeN(ostream& out, int step, int N, StrGen gen) {
+void GraphicTimeN(ostream& out, int step, int N, StrGen gen, int attempts = 5) {
   vector<int> n, time;
   for (int size = step; size <= N; size += step) {
     n.push_back(size);
-    time.push_back(BuildTreeBenchmark<Tree>(size, gen));
+    time.push_back(BuildTreeBenchmark<Tree>(size, gen, attempts));
   }
   out << vecToString(n) << '\n';
   out << vecToString(time) << '\n';
@@ -42,29 +42,32 @@ void GraphicTimeN(ostream& out, int step, int N, StrGen gen) {
 void GraphicCompareNodeType() {
   const int step = 100'000;
   const int N = 3'000'000;
+  const int attempts = 10;
 
   cerr << "GraphicCompareNodeType" << endl;
   ofstream out("graphics/compare_node_type.txt");
 
   {
     LOG_DURATION("hash")
-    GraphicTimeN<SuffixTree<string>>(out, step, N, randomStringEng);
+    GraphicTimeN<SuffixTree<string>>(out, step, N, randomStringEng, attempts);
   }
 
   {
     LOG_DURATION("tree")
-    GraphicTimeN<SuffixTree<string, map<char, int>>>(out, step, N,
-                                                     randomStringEng);
+    GraphicTimeN<MapSufTreeWithEngAlph>(out, step, N, randomStringEng,
+                                        attempts);
   }
 
   {
-    LOG_DURATION("vector")
-    GraphicTimeN<VecSufTreeWithEngAlph>(out, step, N, randomStringEng);
+    LOG_DURATION("list")
+    GraphicTimeN<ListSufTreeWithEngAlph>(out, step, N, randomStringEng,
+                                         attempts);
   }
 
   {
     LOG_DURATION("array")
-    GraphicTimeN<ArrSufTreeWithEngAlph>(out, step, N, randomStringEng);
+    GraphicTimeN<ArrSufTreeWithEngAlph>(out, step, N, randomStringEng,
+                                        attempts);
   }
 }
 
@@ -81,17 +84,16 @@ void GraphicCompareAlphSize() {
     GraphicTimeN<SuffixTree<vector<int>>>(out, step, N, randomIntVec<n>); \
   }
 
-#define TREE(n)                                                            \
-  {                                                                        \
-    LOG_DURATION(string("tree") + #n)                                      \
-    GraphicTimeN<SuffixTree<vector<int>, map<int, int>>>(out, step, N,     \
-                                                         randomIntVec<n>); \
+#define TREE(n)                                                        \
+  {                                                                    \
+    LOG_DURATION(string("tree") + #n)                                  \
+    GraphicTimeN<MapSufTreeWithIntSeq>(out, step, N, randomIntVec<n>); \
   }
 
-#define VECTOR(n)                                                         \
-  {                                                                       \
-    LOG_DURATION(string("vector") + #n)                                   \
-    GraphicTimeN<VecSufTreeWithIntSeq<n>>(out, step, N, randomIntVec<n>); \
+#define LIST(n)                                                         \
+  {                                                                     \
+    LOG_DURATION(string("list") + #n)                                   \
+    GraphicTimeN<ListSufTreeWithIntSeq>(out, step, N, randomIntVec<n>); \
   }
 
 #define ARRAY(n)                                                          \
@@ -103,7 +105,7 @@ void GraphicCompareAlphSize() {
 #define TEST(size) \
   HASH(size)       \
   TREE(size)       \
-  VECTOR(size)     \
+  LIST(size)       \
   ARRAY(size)
 
   TEST(2)
@@ -123,7 +125,7 @@ void GraphicStatsChilds() {
     out << vecToString(sf.GetStats().Childs()) << "\n";
   }
 
-  SuffixTree<vector<int>> sf(randomIntVec<1000>(10'000'000));
+  SuffixTree<vector<int>> sf(randomIntVec<100>(10'000'000));
   out << vecToString(sf.GetStats().Childs()) << "\n";
 }
 
@@ -153,10 +155,29 @@ void GraphicStatsChildsDepth() {
   }
 }
 
+void GraphicsMapAndHash() {
+  cerr << "GraphicsMapAndHash" << endl;
+  ofstream out("graphics/map_and_hash.txt");
+
+  const int N = 3'000'000;
+  const int step = 100'000;
+  constexpr int alphsize = 10'000;
+
+  {
+    LOG_DURATION("hash")
+    GraphicTimeN<SuffixTree<vector<int>>>(out, step, N, randomIntVec<alphsize>);
+  }
+  {
+    LOG_DURATION("tree")
+    GraphicTimeN<MapSufTreeWithIntSeq>(out, step, N, randomIntVec<alphsize>);
+  }
+}
+
 void RunGraphics() {
   cerr << "Run benchmarks for graphics... It can take a while" << endl;
   GraphicCompareNodeType();
   GraphicCompareAlphSize();
+  GraphicsMapAndHash();
   GraphicStatsChilds();
   GraphicStatsChildsDepth();
 }
@@ -176,7 +197,7 @@ double getMemoryUsage() {
 
 void MemoryUsage() {
   const int N = 10'000'000;
-  const int attempts = 10;
+  const int attempts = 3;
 
   cerr << "MemoryUsage" << endl;
   ofstream out("graphics/memory_usage.txt");
@@ -195,15 +216,15 @@ void MemoryUsage() {
     m[struct].push_back(sum / attempts); \
   }
 
-#define MEM_MAP(TreeType, struct) \
-  MEM(TreeType, struct, 2)        \
-  MEM(TreeType, struct, 5)        \
-  MEM(TreeType, struct, 10)       \
-  MEM(TreeType, struct, 50)       \
-  MEM(TreeType, struct, 100)      \
+#define RUN(TreeType, struct) \
+  MEM(TreeType, struct, 2)    \
+  MEM(TreeType, struct, 5)    \
+  MEM(TreeType, struct, 10)   \
+  MEM(TreeType, struct, 50)   \
+  MEM(TreeType, struct, 100)  \
   MEM(TreeType, struct, 1000)
 
-#define MEM_ARR(TreeType, struct) \
+#define RUN_ARR(TreeType, struct) \
   MEM(TreeType<2>, struct, 2)     \
   MEM(TreeType<5>, struct, 5)     \
   MEM(TreeType<10>, struct, 10)   \
@@ -211,17 +232,14 @@ void MemoryUsage() {
   MEM(TreeType<100>, struct, 100) \
   MEM(TreeType<1000>, struct, 1000)
 
-  MEM_MAP(SuffixTree<vector<int>>, "hash")
-
-  using MapSufTree = SuffixTree<vector<int>, map<int, int>>;
-  MEM_MAP(MapSufTree, "tree")
-
-  MEM_ARR(VecSufTreeWithIntSeq, "vector")
-  MEM_ARR(ArrSufTreeWithIntSeq, "array")
+  RUN(SuffixTree<vector<int>>, "hash")
+  RUN(MapSufTreeWithIntSeq, "tree")
+  RUN(ListSufTreeWithIntSeq, "list")
+  RUN_ARR(ArrSufTreeWithIntSeq, "array")
 
   out << vecToString(vector<int>{2, 5, 10, 50, 100, 1000}) << "\n";
   out << vecToString(m["hash"]) << "\n";
   out << vecToString(m["tree"]) << "\n";
-  out << vecToString(m["vector"]) << "\n";
+  out << vecToString(m["list"]) << "\n";
   out << vecToString(m["array"]) << "\n";
 }

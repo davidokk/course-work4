@@ -89,6 +89,8 @@ void StressTestArray() { StressTest<ArrSufTreeWithEngAlph>(); }
 
 void StressTestVector() { StressTest<VecSufTreeWithEngAlph>(); }
 
+void StressTestList() { StressTest<ListSufTreeWithEngAlph>(); }
+
 void IndexerTest() {
   ArrSufTreeWithDNA sf(randomDNA(1000));
   VecSufTreeWithEngAlph sf1(randomStringEng(1000));
@@ -108,5 +110,6 @@ void RunTests() {
   RUN_TEST(tr, StressTestTree);
   RUN_TEST(tr, StressTestArray);
   RUN_TEST(tr, StressTestVector);
+  RUN_TEST(tr, StressTestList);
   RUN_TEST(tr, IndexerTest);
 }

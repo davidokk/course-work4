@@ -3,9 +3,10 @@
 template <typename T>
 struct DefaultIndexer {
   T operator()(const T& c) const { return c; }
+  constexpr static int size = 0;
 };
 
-template <int AlphSize> 
+template <int AlphSize>
 struct IntSequenceIndxer {
   int operator()(int c) const { return c; }
   constexpr static int size = AlphSize;
